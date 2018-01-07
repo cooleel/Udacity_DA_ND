@@ -47,25 +47,19 @@ summary(wine)
 ```{r echo=FALSE, Univariate_Plots}
 names(wine)
 ```
-####Correlation between variable pairs
-```{r echo=FALSE, fig.width=6,fig.height=7}
-#ggpairs(wine)
-
-corrplot(cor(wine) , method = "number", type="lower",diag=FALSE )
-```
-
 
 ```{r echo=FALSE}
 #create two new variables as the factor variables of quality 
 wine$rating<-as.factor(wine$quality)
-wine$overall <- factor(ifelse(wine$quality<=5,"poor","good"),levels = c("poor","good"))
+wine$overall <- factor(ifelse(wine$quality<=5,"poor","good"),
+                       levels = c("poor","good"))
 ```
 
 ####Quality
 ```{r echo=FALSE, fig.width=8,fig.height=3}
 #check quality data
 p1 <- ggplot(data = wine,aes(x=quality))+
-  geom_histogram(binwidth = 1)+
+  geom_bar()+
   scale_x_continuous(breaks = seq(3,8,1))+
   scale_y_continuous(lim=c(0,700),breaks = seq(0,700,100))+
   xlab("Wine Quality(rating score)")
@@ -76,6 +70,7 @@ p2 <- ggplot(data = wine,aes(x=overall))+
   xlab("Overall Wine Quality(based on rating score)")
 grid.arrange(p1,p2,ncol=2)
 ```
+
 
 This dataset has recoreded rating scores of 1599 red wines, most of the score in the range of 5~7. Among these 1599 wines, 744 of them with a rating score equal or less than "5", they are denoted as "poor" quality wines. Others with a rating score higher than "5", are denoted as "good" quality wines. 
 
@@ -88,30 +83,51 @@ p1<- ggplot(data = wine, aes(x=alcohol))+
   scale_x_continuous(lim=c(8,15),breaks = seq(8,15,1))+
   xlab("Alcohol(% by volume)")
 
-p2<- ggplot(data = wine, aes(x=alcohol))+
-  geom_histogram(binwidth = 0.01)+
-  scale_x_log10()+
-  xlab("log(Alcohol(% by volume))")
+p2<- ggplot(data = wine, aes(x=log(alcohol)))+
+  geom_histogram(binwidth = 0.02)+
+  scale_x_continuous(lim=c(2.0,2.8),breaks = seq(2.0,2.8,0.2))+
+  xlab("log(Alcohol(%by volume))")
 
 grid.arrange(p1,p2,ncol=2)
 
 ```
 
+Histograph shows the distribution of Alcohol is highly right skewed, so I did a log tranform on alcohol data, but this only improved the alcohol distribution a little.
+
+
+Summary of Alcohol
+```{r echo=FALSE}
+summary(wine$alcohol)
+```
+
+
 ####Sulphates 
-```{r echo=FALSE,warning=FALSE,message=FALSE,fig.width=8,fig.height=3}
+```{r echo=FALSE,warning=FALSE,message=FALSE,fig.width=8,fig.height=6}
 #Check the sulphates
 p1 <- ggplot(data = wine, aes(x=sulphates))+
   geom_histogram(binwidth = 0.02)+
   xlab("Sulphates(g/dm^3)")
 
+p2 <- ggplot(data = wine,aes(x=1, y= sulphates))+
+  geom_jitter(alpha=0.1)+
+  geom_boxplot(alpha=0.2,color="red")
+
 #remove outliers
-p2 <- ggplot(data = wine, aes(x=sulphates))+
+p3 <- ggplot(data = wine, aes(x=sulphates))+
   geom_histogram(binwidth = 0.02)+
   xlim(0,quantile(wine$sulphates,0.99))+
   xlab("Sulphates(g/dm^3)")
 
-grid.arrange(p1,p2,ncol=2)
+grid.arrange(p1,p2,p3,ncol=2)
 
+```
+
+From the plot, I found there were some outliers in sulphates data. So I excluded these outliers and made the histograph again which shown a normal distibution of sulphates.
+
+
+Summary of Sulphates
+```{r echo=FALSE}
+summary(wine$sulphates)
 ```
 
 ####Volatile.acidity
@@ -131,6 +147,14 @@ p3 <- ggplot(data = wine,aes(x=volatile.acidity))+
 grid.arrange(p1,p2,p3,ncol=3)
 ```
 
+The distibution of volatile.acidity data is also right skewed. So I tried two data transformation ways such as log and sqrt, the histographs indicated sqrt transformation is better.
+
+Summary of Volatile.acidity
+```{r echo=FALSE}
+summary(wine$volatile.acidity)
+```
+
+
 ####Total.sulfur.dioxide
 ```{r echo=FALSE,warning=FALSE,message=FALSE,fig.width=8,fig.height=3}
 p1 <- ggplot(data = wine,aes(x=total.sulfur.dioxide))+
@@ -145,6 +169,14 @@ p2 <- ggplot(data = wine,aes(x=total.sulfur.dioxide))+
 grid.arrange(p1,p2,ncol=2)
 ```
 
+The distibution of total.sulfur.dioxide data is again right skewed. After a log transformation, it shown a normal distribution.
+
+
+Summary of Total.sulfur.dioxide
+```{r echo=FALSE}
+summary(wine$total.sulfur.dioxide)
+```
+
 ####pH value
 ```{r echo=FALSE, message=FALSE,fig.width=8,fig.height=3}
 p1<- ggplot(data = wine,aes(x=pH))+
@@ -154,6 +186,13 @@ p2 <- ggplot(data = wine,aes(x=pH))+
   geom_histogram(binwidth = 0.02)
 
 grid.arrange(p1,p2,ncol=2)
+```
+
+pH data is in the shape of normal distribution. I tried different bins.
+
+Summary of pH
+```{r echo=FALSE}
+summary(wine$pH)
 ```
 
 
@@ -189,7 +228,15 @@ Also when I was plotting sulphates data, I excluded the top1% data, the rest of 
 
 # Bivariate Plots Section
 
-####Alcohol of wines in differnt qualities
+####Check the correlation values between each couple of numerical features.
+```{r echo=FALSE, fig.width=6,fig.height=6.5}
+wine_sub <- subset(wine,select = -c(rating,overall))
+corrplot(cor(wine_sub) , method = "number", type="lower",diag=FALSE )
+```
+
+I applied a correlation plot for these data to check the correlation between each pair of numeric data. The plot indicates alcohol data has the highest correlation to quality.
+
+####Alcohol of wines in different qualities
 ```{r echo=FALSE, message=FALSE, Bivariate_Plots,fig.width=12,fig.height=3}
 #check alcohol and quality
 p2 <- ggplot(data = wine,aes(x=overall,y=alcohol))+
@@ -209,6 +256,9 @@ p3 <- ggplot(data = wine, aes(x=alcohol,fill=overall))+
 grid.arrange(p1,p2,p3,ncol=3)
 
 ```
+
+I checked alcohol data in wine groups with differnt qualities(good and poor) and found the good quality group has the higher median of alcohol. The distribution of alcohol is highly right skewed in poor quality wines while it is normal distributed in good quality wines.
+
 
 ####Sulphates of wines in different qualities
 ```{r echo=FALSE, warning=FALSE, message=FALSE, fig.width=12,fig.height=3}
@@ -233,6 +283,9 @@ p3 <-ggplot(data = wine, aes(x=sulphates,fill=overall))+
 grid.arrange(p1,p2,p3,ncol=3)
 ```
 
+I checked sulphates data in wine groups with differnt qualities(good and poor) and found the good quality group has the higher median of sulphates. 
+
+
 ####Volatile acidity of wines in different qualities
 ```{r echo=FALSE, message=FALSE,fig.width=12,fig.height=3}
 p2<- ggplot(data = wine,aes(x=overall,y=volatile.acidity))+
@@ -253,6 +306,8 @@ p3 <- ggplot(data = wine,aes(x=volatile.acidity,fill=overall))+
 grid.arrange(p1,p2,p3,ncol=3)
 ```
 
+I checked volatile.acidity data in wine groups with differnt qualities(good and poor) and found the good quality group has lower median of volatile.acidity.
+
 
 ####Total.sulfur.dioxide of wine in different qualities
 ```{r, echo=FALSE,message=FALSE,fig.width=12,fig.height=3}
@@ -269,6 +324,9 @@ p3 <- ggplot(data = wine,aes(x=log(total.sulfur.dioxide),fill=overall))+
 grid.arrange(p1,p2,p3,ncol=3)
 ```
 
+I checked total.sulfer.dioxide data in wine groups with differnt qualities(good and poor) and found the good quality group has a slightly lower median of total.sulfer.dioxide.The density plot shown the peak of total.sulfer.dioxide is a litte bit larger in poor quality wines than it is in good quality wines. 
+
+
 ####pH of wines in different qualities
 ```{r echo=FALSE,message=FALSE, fig.width=12,fig.height=3}
 p1 <- ggplot(data = wine,aes(x=pH))+
@@ -284,6 +342,9 @@ grid.arrange(p1,p2,p3,ncol=3)
 
 ```
 
+I checked pH data in wine groups with differnt qualities(good and poor) and found it remained almost same in two groups.
+
+
 ###Exploring other variables
 ####Density and fixed.acidity
 ```{r echo=FALSE,warning=FALSE,message=FALSE,fig.width=10,fig.height=6}
@@ -295,9 +356,16 @@ p3 <- ggplot(data = wine,aes(x=log(fixed.acidity)))+
   geom_histogram()
 p4<-ggplot(data = wine,aes(x=density,y=log(fixed.acidity)))+
   geom_point(alpha=1/4)+
-  stat_smooth()
+  stat_smooth()+
+  annotate("text",x=0.992,y=2.5,
+           label = paste("R= ",
+           toString(round(cor(wine$fixed.acidity,wine$density),2))),
+           color="red")
 grid.arrange(p2,p3,p1,p4,ncol=2)
 ```
+
+According to correlation plot ,I compared fixed.acidity and density. These two variables are correlated. 
+
 
 ####Citric.acid and fixed.acidity
 ```{r echo=FALSE,warning=FALSE,message=FALSE,fig.width=5,fig.height=3}
@@ -306,8 +374,46 @@ ggplot(data = wine,aes(x=citric.acid,y=fixed.acidity))+
   xlim(0,quantile(wine$citric.acid,0.99))+
   stat_smooth()+
   xlab("Citric acid(g/dm^3)")+
-  ylab("Fixed acidity(g/dm^3)")
+  ylab("Fixed acidity(g/dm^3)")+
+  annotate("text",x=0.1,y=14,
+           label = paste("R= ",
+           toString(round(cor(wine$citric.acid,wine$fixed.acidity),2))),
+           color="red")
 ```
+
+Citric.acid and Fixed.acidity have a good correlation.
+
+
+
+####Exploring other variables and quality
+```{r echo=FALSE,warning=FALSE,message=FALSE,fig.width=10,fig.height=8}
+#plot function
+plot_2 <- function(x,y,yla){
+  p <- ggplot(data = wine,aes(x=wine$rating,y=y))+
+    geom_jitter(alpha=0.1)+
+    geom_boxplot(alpha=0.5,color='red')+
+    stat_summary(fun.y = mean,
+                 geom = "point",
+                 color= "blue",
+                 shape = 8,
+                 size = 4)+
+    ylab(yla)
+  return(p)
+}
+
+p1 <- plot_2(y=wine$alcohol,yla = "Alcohol")
+
+p2 <- plot_2(y=wine$sulphates,yla = "Sulphates")
+
+p3 <- plot_2(y=wine$volatile.acidity,yla = "Volatile.acidity")
+
+p4 <- plot_2(y=wine$pH,yla = "pH")
+  
+grid.arrange(p1,p2,p3,p4,ncol=2)
+
+```
+
+Checked the changes of different variables in wines with differnt qualities in detail. The trend is as the same as above. Better wines have higher alcohol and sulphates amount,but lower volatile.acidity amount. pH value is similar between wines with differnt qualities.
 
 
 # Bivariate Analysis
@@ -338,60 +444,40 @@ The strongest relationship I found is quality and alcohol, density and fixed.aci
 
 # Multivariate Plots Section
 
-> **Tip**: Now it's time to put everything together. Based on what you found in
-the bivariate plots section, create a few multivariate plots to investigate
-more complex interactions between variables. Make sure that the plots that you
-create here are justified by the plots you explored in the previous section. If
-you plan on creating any mathematical models, this is the section where you
-will do that.
-
 ####Highly correlated variables
 ```{r echo=FALSE,warning=FALSE, message=FALSE, fig.width=10,fig.height=9}
+#plotting function
+plot_1 <- function(x,y,xla,yla) {
+  p <- ggplot(data = wine,aes(x=x,y=y,fill=overall))+
+    geom_point(alpha=0.1,aes(color=overall))+
+    stat_smooth()+
+    xlab(xla)+
+    ylab(yla)
+  return(p)
+}
 
-p1 <- ggplot(data = wine,aes(x=alcohol,y=volatile.acidity))+
-  geom_point(alpha=1/4,aes(color=overall))
+p1 <- plot_1(x=wine$alcohol,y=wine$volatile.acidity,
+             xla="Alcohol",yla ="Volatile.acidity")
 
-p2 <- ggplot(data = wine, aes(x=sulphates,y=volatile.acidity))+
-  xlim(0.25,quantile(wine$sulphates,0.99))+
-  geom_point(alpha=1/4,aes(color=overall))
+p2 <- plot_1(x=wine$sulphates,y=wine$volatile.acidity,
+             xla = "Sulphates",yla = "Volatile.acidity")
 
-p3 <- ggplot(data = wine,aes(x=alcohol,y=sulphates))+
-  geom_point(alpha=1/4,aes(color=overall))
+p3 <- plot_1(x=wine$alcohol,y=wine$sulphates,
+             xla = "Alcohol",yla = "Sulphates") 
 
-p4<- ggplot(data = wine,aes(x=sulphates,y=log(total.sulfur.dioxide)))+
-  geom_point(alpha=1/4,aes(color=overall))
+p4<- plot_1(x=wine$sulphates,y=log(wine$total.sulfur.dioxide),
+            xla="Sulphates",yla = "log(Total.sulfur.dioxide)")
 
-p5<- ggplot(data = wine, aes(x=alcohol,y=log(total.sulfur.dioxide)))+
-  geom_point(alpha=1/4,aes(color=overall))
+p5<- plot_1(x=wine$alcohol,y=log(wine$total.sulfur.dioxide),
+            xla = "Alcohol",yla = "log(Total.sulfur.dioxide)")
 
-p6<- ggplot(data = wine, aes(x= volatile.acidity,y=log(total.sulfur.dioxide)))+
-  geom_point(alpha=1/4,aes(color=overall))
-
+p6<- plot_1(x=wine$volatile.acidity,y=log(wine$total.sulfur.dioxide),
+            xla = "Volatile.acidity",yla = "log(Total.sulfur.dioxide")
+  
 grid.arrange(p1,p2,p3,p4,p5,p6,ncol=2)
 ```
 
-####Exploring other variables and quality
-```{r echo=FALSE,warning=FALSE,message=FALSE,fig.width=12,fig.height=6}
-p1 <- ggplot(data = wine,aes(x=rating,y=alcohol))+
-  geom_point(alpha=1/4)+annotate("text",label="Mean", x= 6.35,y= 12.2,size=4,color ='red')+
-  stat_summary(aes(y=alcohol,group=1),fun.y=mean,color='red',geom='line',group=1)
-
-p2 <-ggplot(data = wine,aes(x=rating,y=sulphates))+
-  geom_point(alpha=1/4)+annotate("text",label="Mean", x= 6.35,y= 0.8,size=4,color ='red')+
-  ylim(0.25,quantile(wine$sulphates,0.99))+
-  stat_summary(aes(y=sulphates,group=1),fun.y=mean,color='red',geom='line',group=1)
-
-p3 <- ggplot(data = wine,aes(x=rating,y=volatile.acidity))+
-  geom_point(alpha=1/4)+annotate("text",label="Mean", x= 6.35,y= 0.4,size=4,color ='red')+
-  stat_summary(aes(y=volatile.acidity,group=1),fun.y = mean,color='red',geom = "line",group=1)
-
-p4 <- ggplot(data = wine,aes(x=rating,y=pH))+
-  geom_point(alpha=1/4)+annotate("text",label="Mean", x= 6.35,y= 3.2,size=4,color ='red')+
-  stat_summary(aes(y=pH,group=1),fun.y = mean,color='red',geom = "line",group=1)
-
-grid.arrange(p1,p2,p3,p4,ncol=2)
-
-```
+Checked the changing trend between highly correlated variables in wines of differnt quality groups. 
 
 ####Logistic regression model
 ```{r echo=FALSE, Multivariate_Plots}
@@ -404,7 +490,8 @@ train<-wine_bi[sample(nrow(wine_bi),round(0.85*dim(wine_bi)[1])),]
 test<-setdiff(wine_bi,train)
 
 #generate model
-model <- glm(overall~.,family = binomial(link = "logit"),data=train[,c(1:11,14)])
+model <- glm(overall~.,family = binomial(link = "logit"),
+             data=train[,c(1:11,14)])
 summary(model)
 ```
 
@@ -431,6 +518,8 @@ auc <- auc <- auc@y.values[[1]]
 print(paste("auc is",auc))
 ```
 
+ROC curve of this regression model.
+
 # Multivariate Analysis
 
 ### Talk about some of the relationships you observed in this part of the \
@@ -454,17 +543,19 @@ I tranformed the quality feature to a binary variable("<=5"-"poor"-0, while ">5"
 ```{r echo=FALSE, fig.width=8,fig.height=3}
 #check quality data
 p1 <- ggplot(data = wine,aes(x=quality))+
-  geom_histogram(binwidth = 1)+
+  geom_bar()+
   scale_x_continuous(breaks = seq(3,8,1))+
   scale_y_continuous(lim=c(0,700),breaks = seq(0,700,100))+
-  xlab("Wine Quality(rating score)")
+  xlab("Wine Quality(rating score)")+
+  ggtitle("Distribution of Wine Quality")
 p2 <- ggplot(data = wine,aes(x=overall))+
   geom_bar(width = 0.5)+
   geom_text(stat="count",aes(label=..count..),vjust=-0.5)+
-  scale_y_continuous(lim=c(0,1000),breaks = seq(0,1000,100))+
+  scale_y_continuous(lim=c(0,1000),breaks = seq(0,1000,200))+
   annotate("text",label="<=5", x= 1,y= 900,size=4,color ='red')+
   annotate("text",label=">5", x= 2,y= 1000,size=4,color ='red')+
-  xlab("Overall Wine Quality(based on rating score)")
+  xlab("Overall Wine Quality(based on rating score)")+
+  ggtitle("Overall Wine Quality")
 grid.arrange(p1,p2,ncol=2)
 ```
 
@@ -472,39 +563,30 @@ grid.arrange(p1,p2,ncol=2)
 Firstly I checked the distribution of the output variable "Quality" and found most of the wines have a rating score in the range of 5-7. For the ease of following work, I made a new variable based on quality, which is the overall feature. Wines with a rating score less or equal to "5" are labeled as "poor" and wines with a rating score higher than 5 are labeled as "good". 
 
 ### Plot Two
-```{r echo=FALSE, Plot_One,warning=FALSE,message=FALSE,fig.width=12,fig.height=9}
-p1 <- ggplot(data = wine,aes(x=alcohol,y=volatile.acidity))+
-  geom_point(alpha=1/4,aes(color=overall))+
-  xlab("Alcohol(% by volume)")+
-  ylab("Volatile.acidity(g/dm^3)")
+```{r echo=FALSE,Plot_One,warning=FALSE,message=FALSE,fig.width=10,fig.height=8}
+#plot function
+plot_2 <- function(x,y,yla){
+  p <- ggplot(data = wine,aes(x=wine$rating,y=y))+
+    geom_jitter(alpha=0.1)+
+    geom_boxplot(alpha=0.5,color='red')+
+    stat_summary(fun.y = mean,
+                 geom = "point",
+                 color= "blue",
+                 shape = 8,
+                 size = 4)+
+    ylab(yla)
+  return(p)
+}
 
-p2 <- ggplot(data = wine, aes(x=sulphates,y=volatile.acidity))+
-  xlim(0.25,quantile(wine$sulphates,0.99))+
-  geom_point(alpha=1/4,aes(color=overall))+
-  xlab("Sulphates(g/dm^3)")
-  ylab("Volatile.acidity(g/dm^3)")
+p1 <- plot_2(y=wine$alcohol,yla = "Alcohol(% by volume)")
 
-p3 <- ggplot(data = wine,aes(x=alcohol,y=sulphates))+
-  geom_point(alpha=1/4,aes(color=overall))+
-  xlab("Alcohol(% by volume)")+
-  ylab("Sulphates(g/dm^3)")
+p2 <- plot_2(y=wine$sulphates,yla = "Sulphates(g/dm^3)")
 
-p4<- ggplot(data = wine,aes(x=sulphates,y=log(total.sulfur.dioxide)))+
-  geom_point(alpha=1/4,aes(color=overall))+
-  xlab("Sulphates(g/dm^3)")+
-  ylab("log(Total.sulfur.dioxide(mg/dm^3))")
+p3 <- plot_2(y=wine$volatile.acidity,yla = "Volatile.acidity(g/dm^3)")
 
-p5<- ggplot(data = wine, aes(x=alcohol,y=log(total.sulfur.dioxide)))+
-  geom_point(alpha=1/4,aes(color=overall))+
-  xlab("Alcohol(% by volume)")+
-  ylab("log(Total.sulfur.dioxide(mg/dm^3))")
-
-p6<- ggplot(data = wine, aes(x= volatile.acidity,y=log(total.sulfur.dioxide)))+
-  geom_point(alpha=1/4,aes(color=overall))+
-  xlab("Volatile.acidity(g/dm^3)")
-  ylab("log(Total.sulfur.dioxide(mg/dm^3))")
-
-grid.arrange(p1,p2,p3,p4,p5,p6,ncol=2)
+p4 <- plot_2(y=wine$pH,yla = "pH")
+  
+grid.arrange(p1,p2,p3,p4,ncol=2,top ="Key feautres vary in Wines of different qualities")
 
 ```
 
@@ -514,7 +596,7 @@ Apparently alcohol has the strongest relationship with quality, as well as other
 
 ### Plot Three
 ```{r echo=FALSE, Plot_Three}
-plot(prf)
+plot(prf,main="ROC curve")
 text(0.8,0.2,paste("auc is",round(auc,3)),cex = 1,col = 'red')
 ```
 
@@ -526,7 +608,12 @@ Since I made the binary variable "overall", I tried the logistic regression mode
 # Reflection
 This is my very first try of Explore Data Analysis, both the dataset and process are very intersting. Many features can affect the output variable "wine quality".
 
+I was a little bit confused about the feature type and corresponding plot type, until the first submission review came back, I revised my project according to the response, now I think I made all these plots in the right way.
+
 I was thinking about a linear regression model at first, so I tried to explore the relationship of different variables to the main vairable of interest. But actually not a single or even some combination of variables have a very strong relationship to "quality". 
 So later I tranformed the output variable to a binary one, wines with a rating score lower or equal to "5" are labeled as "poor", which are denoted to "0". And wines with a rating score higher than "5" are labeld as "good", which are denoted to "1" later. 
 
 Logistic regression model worked for this dataset. The very preliminary model has a predict accuracy of 0.75. With cross-validation and also expanding the size of dataet, I should be able to get a better model.
+
+This dataset still needs more work, for example, we can try feature selection to pick up variables that contribute more to wine quality. Then we may find more interesting things. 
+
