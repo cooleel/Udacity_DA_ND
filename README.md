@@ -1,2 +1,3 @@
-# Udacity_DA_ND
-undacity_data_analysis
+# Data Analysis Projects
+## Analysis of White Wine Quality
+## Investigate of TMDB dataset
