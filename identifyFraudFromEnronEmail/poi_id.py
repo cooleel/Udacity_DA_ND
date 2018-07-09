@@ -5,7 +5,7 @@ import pickle
 import pprint
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd 
+import pandas as pd
 from scipy import stats
 import seaborn as sns
 import tester
@@ -36,7 +36,7 @@ with open("final_project_dataset.pkl", "r") as data_file:
 def exploration_data(data_dict):
     total_people = len(data_dict)
     print "total number of people in the dataset: ", total_people
-    
+
     number_features = len(data_dict["ALLEN PHILLIP K"])
     total_features = data_dict["ALLEN PHILLIP K"].keys()
     print "Total features in the dataset: "
@@ -44,7 +44,7 @@ def exploration_data(data_dict):
     print "poi is the label, the number of all other featuers in the dataset is: ", number_features-1
     print "An example entry 'ALLEN PHILLIP K' in the dataset: "
     print data_dict["ALLEN PHILLIP K"]
-    
+
     #check for the poi
     total_poi = 0
     for k in data_dict:
@@ -52,7 +52,7 @@ def exploration_data(data_dict):
             total_poi+=1
     print "The number of poi:", total_poi
     print "The percentage of poi is {:0.2f}%.".format(100.00*total_poi/total_people)
-    
+
 exploration_data(data_dict)
 
 ### Task 2: Remove outliers
@@ -68,18 +68,18 @@ for f in data_dict:
         data_dict[f]["from_poi_to_this_person_ratio"] = 1.0 * data_dict[f]["from_poi_to_this_person"]/data_dict[f]["to_messages"]
     else:
         data_dict[f]["from_poi_to_this_person_ratio"] = "NaN"
-        
+
 for f in data_dict:
     if data_dict[f]["from_this_person_to_poi"]!="NaN":
         data_dict[f]["from_this_person_to_poi_ratio"] = 1.0 * data_dict[f]["from_this_person_to_poi"]/data_dict[f]["from_messages"]
     else:
-        data_dict[f]["from_this_person_to_poi_ratio"] = "NaN"   
-        
+        data_dict[f]["from_this_person_to_poi_ratio"] = "NaN"
+
 #make the featurs_list
 features_list  = ['poi','total_payments','total_stock_value',
-                  'salary', 'deferral_payments', 'loan_advances', 'bonus', 'restricted_stock_deferred', 'deferred_income', 
-                  'expenses', 'exercised_stock_options', 'other', 'long_term_incentive', 'restricted_stock', 
-                  'director_fees','to_messages', 'from_poi_to_this_person', 'from_messages', 'from_this_person_to_poi', 
+                  'salary', 'deferral_payments', 'loan_advances', 'bonus', 'restricted_stock_deferred', 'deferred_income',
+                  'expenses', 'exercised_stock_options', 'other', 'long_term_incentive', 'restricted_stock',
+                  'director_fees','to_messages', 'from_poi_to_this_person', 'from_messages', 'from_this_person_to_poi',
                   'shared_receipt_with_poi','from_poi_to_this_person_ratio','from_this_person_to_poi_ratio']
 
 
@@ -96,10 +96,10 @@ df.loc[:,"total_payments":"director_fees"] = df.loc[:,"total_payments":"director
 df.loc[:,"to_messages":"from_this_person_to_poi_ratio"] = df.loc[:,"to_messages":"from_this_person_to_poi_ratio"].apply(lambda x: x.fillna(x.mean()),axis = 0)
 
 #Check incorrect data point in "total_payments" and "total_stock_value"
-#Check the "total_payments" 
+#Check the "total_payments"
 payments = ["salary","deferral_payments","loan_advances","bonus","deferred_income",
             "expenses","other","director_fees","long_term_incentive"]
-df[df[payments].sum(axis = "columns")!=df.total_payments] 
+df[df[payments].sum(axis = "columns")!=df.total_payments]
 #Correct total_payments
 df["total_payments"]["BELFER ROBERT"] = df[payments].loc["BELFER ROBERT"].sum()
 df["total_payments"]["BHATNAGAR SANJAY"] = df[payments].loc["BHATNAGAR SANJAY"].sum()
@@ -139,7 +139,7 @@ tester.test_classifier(clf, my_dataset,feature_list_new)
 importances = clf.feature_importances_
 indices = np.argsort(importances)[::-1]
 
-features_list = sorted(zip(map(lambda x: round(x, 4), clf.feature_importances_), 
+features_list = sorted(zip(map(lambda x: round(x, 4), clf.feature_importances_),
                            feature_list_new[1:]), reverse=True)
 
 features_df = pd.DataFrame(features_list)
@@ -161,14 +161,14 @@ tester.test_classifier(dt,my_dataset,selected_features)
 rf = RandomForestClassifier()
 tester.test_classifier(rf,my_dataset,selected_features)
 
-### Task 5: Tune your classifier to achieve better than .3 precision and recall 
+### Task 5: Tune your classifier to achieve better than .3 precision and recall
 ### using our testing script. Check the tester.py script in the final project
 ### folder for details on the evaluation method, especially the test_classifier
 ### function. Because of the small size of the dataset, the script uses
-### stratified shuffle split cross validation. For more info: 
+### stratified shuffle split cross validation. For more info:
 ### http://scikit-learn.org/stable/modules/generated/sklearn.cross_validation.StratifiedShuffleSplit.html
 
-#From task 4, decision_tree performed the best, here I will tune parameters for 
+#From task 4, decision_tree performed the best, here I will tune parameters for
 from sklearn.cross_validation import StratifiedShuffleSplit
 from sklearn.grid_search import GridSearchCV
 
@@ -198,5 +198,5 @@ tester.test_classifier(dt_best,my_dataset,selected_features)
 ### that the version of poi_id.py that you submit can be run on its own and
 ### generates the necessary .pkl files for validating your results.
 
-dump_classifier_and_data(clf, my_dataset, features_list)
+dump_classifier_and_data(dt_best, my_dataset, selected_features)
 tester.main()
