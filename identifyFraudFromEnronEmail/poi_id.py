@@ -18,9 +18,9 @@ from tester import dump_classifier_and_data
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import AdaBoostClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.ensemble import BaggingClassifier
+#from sklearn.ensemble import AdaBoostClassifier
+#from sklearn.neighbors import KNeighborsClassifier
+#from sklearn.ensemble import BaggingClassifier
 
 ### Task 1: Select what features you'll use.
 ### features_list is a list of strings, each of which is a feature name.
@@ -132,7 +132,7 @@ labels,features = targetFeatureSplit(data)
 
 # Provided to give you a starting point. Try a variety of classifiers.
 #select features using random forest
-clf = RandomForestClassifier(random_state=7)
+clf = RandomForestClassifier(random_state=0)
 tester.test_classifier(clf, my_dataset,feature_list_new)
 
 #list the feature importances
@@ -145,21 +145,31 @@ features_list = sorted(zip(map(lambda x: round(x, 4), clf.feature_importances_),
 features_df = pd.DataFrame(features_list)
 features_df = features_df.rename(index = str, columns = {0:"importance",1:"feature"})
 
-#based on feature importance, select following features for modeling
-selected_features = ['poi','exercised_stock_options','from_this_person_to_poi_ratio']
+#based on feature importance, select following features for modeling 
+#the threshold of accuracy is 0.08 and 0.06
+selected_features1 = ['poi','other','from_this_person_to_poi_ratio','exercised_stock_options','expenses']
+
+selected_features3 = ['poi','other','from_this_person_to_poi_ratio','exercised_stock_options','expenses',
+                     'salary','restricted_stock']
+
+selected_features2 = ['poi','other','from_this_person_to_poi_ratio','exercised_stock_options','expenses',
+                     'salary']
 
 #Try a variatye of classifiers
-#gaussian navie bays
+#gaussian navie bays with different features
 nb = GaussianNB()
-tester.test_classifier(nb, my_dataset,selected_features)
+for i in [selected_features1,selected_features2,selected_features3]:
+    tester.test_classifier(nb, my_dataset,i)
 
-#decision tree
-dt = DecisionTreeClassifier()
-tester.test_classifier(dt,my_dataset,selected_features)
+#decision tree with different features
+dt = DecisionTreeClassifier(random_state=0)
+for i in [selected_features1,selected_features2,selected_features3]:
+    tester.test_classifier(dt,my_dataset,i)
 
 #random forest
-rf = RandomForestClassifier()
-tester.test_classifier(rf,my_dataset,selected_features)
+rf = RandomForestClassifier(random_state=0)
+for i in [selected_features1,selected_features2,selected_features3]:
+    tester.test_classifier(rf,my_dataset,i)
 
 ### Task 5: Tune your classifier to achieve better than .3 precision and recall
 ### using our testing script. Check the tester.py script in the final project
@@ -173,30 +183,32 @@ from sklearn.cross_validation import StratifiedShuffleSplit
 from sklearn.grid_search import GridSearchCV
 
 # tune decision tree
-data = featureFormat(my_dataset, selected_features, sort_keys=True)
+data = featureFormat(my_dataset, selected_features1, sort_keys=True)
 labels, features = targetFeatureSplit(data)
 
 # 1000 folds are used to make it as similar as possible to tester.py.
 folds = 1000
-decision_tree = DecisionTreeClassifier()
-dt_parameters = {'min_samples_split':(5,10,15), \
-                 'max_depth':(3,5,7)}
+decision_tree = DecisionTreeClassifier(random_state=0)
+dt_parameters = {'criterion':('gini','entropy'),\
+                 'min_samples_split':(5,10,15,20),\
+                 'max_depth':(5,7,10,20)}
 # store the split instance into cv and use it in the GridSearchCV.
-cv = StratifiedShuffleSplit(labels, folds)
+cv = StratifiedShuffleSplit(labels, folds,random_state=0)
 grid = GridSearchCV(decision_tree, dt_parameters, cv=cv, scoring='f1')
 grid.fit(features, labels)
 
 print("The best parameters are %s with a score of %0.4f"
       %(grid.best_params_, grid.best_score_))
+#The best parameters are {'min_samples_split': 20, 'criterion': 'entropy', 'max_depth': 7} with a score of 0.4265
 
 #decision tree model with optimal parametres
-dt_best = DecisionTreeClassifier(min_samples_split=5,max_depth=7)
-tester.test_classifier(dt_best,my_dataset,selected_features)
+dt_best = DecisionTreeClassifier(min_samples_split=20,max_depth=7,criterion='entropy',random_state=0)
+tester.test_classifier(dt_best,my_dataset,selected_features1)
 
 ### Task 6: Dump your classifier, dataset, and features_list so anyone can
 ### check your results. You do not need to change anything below, but make sure
 ### that the version of poi_id.py that you submit can be run on its own and
 ### generates the necessary .pkl files for validating your results.
 
-dump_classifier_and_data(dt_best, my_dataset, selected_features)
+dump_classifier_and_data(dt_best, my_dataset, selected_features1)
 tester.main()
